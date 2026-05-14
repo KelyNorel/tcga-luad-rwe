@@ -1,0 +1,8 @@
+ipandas
+numpy
+matplotlib
+seaborn
+lifelines
+scikit-learn
+jupyter
+requests
