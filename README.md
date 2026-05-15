@@ -1,14 +1,16 @@
 # TCGA LUAD — Multi-Modal Survival Analysis
 
 End-to-end survival and biomarker analysis of lung adenocarcinoma using the TCGA 
-Pan-Cancer Atlas 2018 dataset, integrating clinical and somatic mutation data.
+Pan-Cancer Atlas 2018 dataset, integrating clinical, somatic mutation, and 
+transcriptomic data.
 
 ## Overview
 
 Lung adenocarcinoma (LUAD) is the most common subtype of non-small cell lung cancer. 
 This project analyzes overall survival across clinical and molecular dimensions, 
-combining classical biostatistical methods with genomic biomarker analysis — 
-reflecting real-world evidence (RWE) methodology used in oncology research.
+combining classical biostatistical methods with genomic biomarker analysis and 
+multimodal machine learning — reflecting real-world evidence (RWE) methodology 
+used in oncology research.
 
 All data sourced from cBioPortal (publicly available). No PHI involved.
 
@@ -18,9 +20,9 @@ All data sourced from cBioPortal (publicly available). No PHI involved.
 **Patients:** 505 with complete survival data (566 total, 61 excluded — missing OS)  
 **Median OS:** 49.3 months  
 **OS event rate:** 36.0% (182/505)  
-**Data types:** Clinical, somatic mutations, TMB, MSI, copy number (arm-level)
+**Data types:** Clinical, somatic mutations, TMB, MSI, copy number (arm-level), RNA-seq (20,531 genes)
 
-## Analyses Completed
+## Notebook 01 — Clinical & Genomic Survival Analysis (`notebooks/01_eda.ipynb`)
 
 ### 1. Overall Survival
 Kaplan-Meier estimate for the full cohort. Median OS ~49 months with long-term 
@@ -29,8 +31,7 @@ survivors beyond 200 months.
 ### 2. Survival by Pathologic Stage
 Strong stage-dependent separation (log-rank p=1.38e-12). Stage I patients show 
 dramatically better long-term survival. Notable crossing of Stage III and IV curves 
-early (~10 months), potentially reflecting more aggressive treatment in Stage III — 
-to be explored in treatment analysis.
+early (~10 months), potentially reflecting more aggressive treatment in Stage III.
 
 ### 3. Tumor Mutational Burden (TMB)
 TMB stratified by FDA clinical threshold (≥10 mut/Mb): 179 high, 326 low. 
@@ -69,9 +70,7 @@ This may reflect TCGA predating widespread third-generation TKI use (osimertinib
 
 KRAS survival curves cross multiple times (p=0.327), indicating heterogeneity 
 within the KRAS-mutated group. KRAS comprises multiple subtypes (G12C, G12V, G12D) 
-with distinct biology — to be explored in mutation co-occurrence analysis.
-
-## Analyses Completed (continued)
+with distinct biology — explored in analyses 7 and 8.
 
 ### 7. KRAS Subtype Analysis (G12C, G12V, G12D)
 Survival analysis stratified by KRAS mutation subtype.
@@ -134,35 +133,74 @@ Binary classification integrating clinical and molecular features.
 
 ![ML Prediction](notebooks/figures/fig10_ml_prediction.png)
 
+## Notebook 02 — Multimodal Survival Analysis: Clinical + RNA-seq (`notebooks/02_multimodal_survival.ipynb`)
+
+Integration of RNA-seq gene expression (20,531 genes) with clinical features 
+to build multimodal survival models.
+
+**Data processing:** Top 1,000 most variable genes (median expression > 1) → 
+PCA dimensionality reduction (5 components, 29.2% variance explained) → 
+merged with clinical data (n=497 patients with complete multimodal data)
+
+### PCA of Gene Expression
+No clear separation by survival outcome in PC1-PC2 space — variance highly 
+distributed across components, typical of RNA-seq data.
+
+![PCA](notebooks/figures/fig11_pca_expression.png)
+
+### Multimodal Cox Model Comparison
+
+| Model | C-index (fitted) | C-index (5-fold CV) | Uno C-index (95% CI) |
+|---|---|---|---|
+| Clinical only | 0.696 | 0.675 | 0.696 (0.654–0.745) |
+| Expression only | 0.644 | 0.640 | 0.644 (0.607–0.700) |
+| Multimodal | 0.714 | 0.694 | 0.714 (0.674–0.769) |
+
+![Cox Comparison](notebooks/figures/fig12_cox_comparison.png)
+![Uno C-index](notebooks/figures/fig14_uno_cindex.png)
+
+### Formal Statistical Testing
+- **DeLong test** (AUC comparison): p=0.32 — no significant difference
+- **Uno C-index** with bootstrap 95% CI — overlapping CIs confirm no 
+  significant improvement from adding transcriptomic data
+
+**Key finding:** Multimodal integration shows a consistent trend toward 
+improvement (+0.018 C-index) but does not reach statistical significance 
+in this cohort (n=497, 180 events). Stage remains the dominant prognostic 
+factor. A larger cohort would be needed to confirm transcriptomic added value.
 
 ## Stack
 
-- Python, pandas — data ingestion and processing
-- lifelines — Kaplan-Meier, Cox PH, log-rank tests
-- scikit-learn — ML survival prediction
-- Matplotlib, seaborn — visualizations
-- Jupyter — documented analysis notebook
+- **Python, pandas** — data ingestion and processing
+- **lifelines** — Kaplan-Meier, Cox PH, log-rank tests
+- **scikit-survival** — Uno C-index, formal survival model comparison
+- **scikit-learn** — ML prediction, PCA, permutation importance
+- **Matplotlib** — visualizations
+- **Jupyter** — documented analysis notebooks
 
 ## Project Structure
+
 ```
 tcga-luad-rwe/
 ├── data/
-│   ├── raw/          # cBioPortal source files (not tracked in git)
-│   └── processed/    # cleaned datasets (not tracked in git)
+│   ├── raw/                         # cBioPortal source files (not tracked in git)
+│   └── processed/                   # cleaned datasets (not tracked in git)
 ├── notebooks/
-│   ├── 01_eda.ipynb  # main analysis notebook
-│   └── figures/      # saved plots
+│   ├── 01_eda.ipynb                 # clinical & genomic survival analysis
+│   ├── 02_multimodal_survival.ipynb # RNA-seq integration & multimodal models
+│   └── figures/                     # saved plots
 ├── src/
-│   └── ingest.py     # data ingestion and cleaning
+│   └── ingest.py                    # data ingestion and cleaning
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
+
 ## Setup
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+pyenv virtualenv 3.11 luad
+pyenv activate luad
 pip install -r requirements.txt
 python src/ingest.py
 jupyter notebook
@@ -172,4 +210,4 @@ jupyter notebook
 
 **Author:** Raquel (Kely) Norel, PhD  
 **Domain:** Oncology / Real-World Evidence  
-**Status:** ✅ Complete
+**Status:** 🔄 In progress — prognostic gene analysis coming next

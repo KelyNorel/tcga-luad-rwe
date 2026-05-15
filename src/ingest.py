@@ -91,3 +91,39 @@ for gene in GENES:
 
 df.to_csv(OUT / "clinical_clean.csv", index=False)
 print("\n✅ Saved to data/processed/clinical_clean.csv")
+
+# ── RNA-seq data ───────────────────────────────────────────────────────────
+print("\nLoading RNA-seq data...")
+rna = pd.read_csv(RAW / "data_mrna_seq_v2_rsem.txt", sep="\t", index_col=0, low_memory=False)
+rna = rna.drop(columns=["Entrez_Gene_Id"], errors="ignore")
+
+# Clean gene symbols
+rna = rna[rna.index.notna()]
+rna = rna[rna.index != ""]
+rna = rna[~rna.index.duplicated(keep="first")]
+
+# Extract patient IDs from sample barcodes
+rna.columns = [c[:12] for c in rna.columns]
+
+# Filter low-expression genes
+rna_filtered = rna[rna.median(axis=1) > 1]
+
+# Top 1000 most variable genes
+gene_var = rna_filtered.var(axis=1)
+top_genes = gene_var.nlargest(1000).index
+rna_top = rna_filtered.loc[top_genes]
+
+# Transpose
+rna_t = rna_top.T
+rna_t.index.name = "PATIENT_ID"
+
+# Merge with clinical
+clinical_dedup = df.drop_duplicates(subset="PATIENT_ID", keep="first")
+multimodal = clinical_dedup.merge(rna_t, on="PATIENT_ID", how="inner")
+multimodal = multimodal[multimodal["OS_MONTHS"] > 0].dropna(subset=["OS_MONTHS", "OS_EVENT"])
+
+print(f"Multimodal dataset: {multimodal.shape}")
+print(f"OS events: {multimodal['OS_EVENT'].sum()} ({multimodal['OS_EVENT'].mean():.1%})")
+
+multimodal.to_csv(OUT / "multimodal_clean.csv", index=False)
+print("✓ Saved to data/processed/multimodal_clean.csv")
