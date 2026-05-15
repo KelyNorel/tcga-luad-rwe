@@ -169,6 +169,38 @@ improvement (+0.018 C-index) but does not reach statistical significance
 in this cohort (n=497, 180 events). Stage remains the dominant prognostic 
 factor. A larger cohort would be needed to confirm transcriptomic added value.
 
+### Prognostic Gene Analysis
+
+**Univariable Cox for 1,000 genes** (log2-transformed, FDR-corrected):
+- 218 genes significant at p<0.05
+- **50 genes significant after Benjamini-Hochberg FDR correction**
+- 30 adverse (high expression = worse survival)
+- 20 protective (high expression = better survival)
+
+**Top adverse genes:** ERO1L (HR=1.30), LDHA (HR=1.48), KRT6A (HR=1.07)  
+**Top protective genes:** SFTA3 (HR=0.90), NKX2-1 (HR=0.89), CXCL17 (HR=0.90)
+
+All top genes are biologically plausible and consistent with published LUAD 
+literature — validating the analytical approach.
+
+![Volcano Plot](notebooks/figures/fig15_volcano.png)
+![KM Top Genes](notebooks/figures/fig16_km_top_genes.png)
+
+**Optimal cutpoint analysis** (ERO1L, LDHA, SFTA3):
+
+| Gene | Median p | Optimal p | Improvement |
+|---|---|---|---|
+| ERO1L | 9.67e-04 | 2.73e-07 | 3,540x |
+| LDHA | 1.60e-03 | 3.33e-06 | 470x |
+| SFTA3 | 1.65e-04 | 8.28e-06 | 20x |
+
+Optimal cutpoint identifies biologically distinct high-risk subgroups — 
+ERO1L high-risk group comprises only 17% of patients (n=87), not 50% 
+as median split assumes. Visual curve separation is substantially larger 
+with optimal cutpoint for ERO1L and LDHA.
+
+![Optimal Cutpoint](notebooks/figures/fig17_optimal_cutpoint.png)
+
 ## Stack
 
 - **Python, pandas** — data ingestion and processing
@@ -210,4 +242,4 @@ jupyter notebook
 
 **Author:** Raquel (Kely) Norel, PhD  
 **Domain:** Oncology / Real-World Evidence  
-**Status:** 🔄 In progress — prognostic gene analysis coming next
+***Status:** ✅ Complete
