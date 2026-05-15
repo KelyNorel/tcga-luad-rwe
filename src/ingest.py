@@ -52,5 +52,42 @@ print("DFS events:", df["DFS_EVENT"].sum(), "/", len(df))
 print("Stage distribution:\n", df["STAGE_SIMPLE"].value_counts())
 print("Missing OS_MONTHS:", df["OS_MONTHS"].isna().sum())
 
+# ── Mutations ──────────────────────────────────────────────────────────────
+mut = pd.read_csv(RAW / "data_mutations.txt", sep="\t", low_memory=False,
+                  usecols=["Hugo_Symbol", "Tumor_Sample_Barcode", "HGVSp_Short"])
+
+# Extract PATIENT_ID from barcode (first 12 chars)
+mut["PATIENT_ID"] = mut["Tumor_Sample_Barcode"].str[:12]
+
+# Genes of interest
+GENES = ["KRAS", "TP53", "EGFR", "STK11", "KEAP1", "BRAF", "ALK", "ROS1", "MET"]
+
+for gene in GENES:
+    patients = mut[mut["Hugo_Symbol"] == gene]["PATIENT_ID"].unique()
+    df[f"{gene}_MUT"] = df["PATIENT_ID"].isin(patients).astype(int)
+
+# KRAS subtypes
+kras_mut = mut[mut["Hugo_Symbol"] == "KRAS"][["PATIENT_ID", "HGVSp_Short"]].drop_duplicates()
+kras_mut = kras_mut.rename(columns={"HGVSp_Short": "KRAS_SUBTYPE"})
+df = df.merge(kras_mut, on="PATIENT_ID", how="left")
+
+# Simplify KRAS subtype
+def kras_group(s):
+    if pd.isna(s): return "WT"
+    if s == "p.G12C": return "G12C"
+    if s == "p.G12V": return "G12V"
+    if s == "p.G12D": return "G12D"
+    if "G12" in s: return "G12other"
+    return "other"
+
+df["KRAS_GROUP"] = df["KRAS_SUBTYPE"].apply(kras_group)
+
+print("\nKRAS group distribution:\n", df["KRAS_GROUP"].value_counts())
+print("\nMutation prevalence:")
+for gene in GENES:
+    print(f"  {gene}: {df[f'{gene}_MUT'].sum()} ({df[f'{gene}_MUT'].mean():.1%})")
+
+
+
 df.to_csv(OUT / "clinical_clean.csv", index=False)
 print("\n✅ Saved to data/processed/clinical_clean.csv")
