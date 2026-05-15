@@ -103,9 +103,36 @@ Survival analysis within KRAS-mutated patients stratified by co-occurring mutati
 
 ![KRAS Co-mutations](notebooks/figures/fig8_kras_comutations.png)
 
-## Next Steps
-- Multivariable Cox model — stage + mutation status
-- ML-based survival prediction integrating clinical + molecular features
+### 9. Multivariable Cox Proportional Hazards Model
+Integrating clinical (age, stage) and molecular features (driver mutations, TMB, aneuploidy).
+
+- **STK11 mutation has the highest hazard ratio (HR=1.67, p=0.01)** — 
+  largest effect size, consistent with its role in immune evasion and 
+  therapy resistance
+- **Stage is the most statistically robust prognostic factor** (HR=1.46, 
+  p<0.005) — most precisely estimated due to larger group sizes
+- **TP53 mutation is independently prognostic** (HR=1.39, p=0.03) — 
+  effect holds after controlling for stage and co-mutations
+- **TMB and Aneuploidy are not prognostic** (HR=1.00) — consistent with 
+  their role as predictive rather than prognostic biomarkers
+- **C-index: 0.707** — good discriminative ability for a clinical + 
+  molecular model
+
+![Cox Forest Plot](notebooks/figures/fig9_cox_forest.png)
+
+### 10. ML-Based Prediction of 2-Year Mortality
+Binary classification integrating clinical and molecular features.
+
+- **Logistic Regression achieves best AUC (0.775)** — outperforming 
+  Random Forest (0.743) and Gradient Boosting (0.645); simpler models 
+  generalize better with limited sample size
+- **Stage is the dominant predictive feature** — all other features have 
+  importance near zero with wide CIs reflecting limited test set size
+- **STK11 permutation importance is near zero** despite Cox significance — 
+  illustrating that Cox and permutation importance capture different 
+  aspects of feature relevance
+
+![ML Prediction](notebooks/figures/fig10_ml_prediction.png)
 
 
 ## Stack
@@ -145,4 +172,4 @@ jupyter notebook
 
 **Author:** Raquel (Kely) Norel, PhD  
 **Domain:** Oncology / Real-World Evidence  
-**Status:** 🔄 In progress — Cox model and ML prediction next
+**Status:** ✅ Complete
