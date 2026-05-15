@@ -71,11 +71,42 @@ KRAS survival curves cross multiple times (p=0.327), indicating heterogeneity
 within the KRAS-mutated group. KRAS comprises multiple subtypes (G12C, G12V, G12D) 
 with distinct biology — to be explored in mutation co-occurrence analysis.
 
+## Analyses Completed (continued)
+
+### 7. KRAS Subtype Analysis (G12C, G12V, G12D)
+Survival analysis stratified by KRAS mutation subtype.
+
+- **No significant survival difference across KRAS subtypes** (log-rank p = 0.2275) — 
+  consistent with KRAS being a **predictive** (not prognostic) biomarker; 
+  subtype-specific therapies (sotorasib for G12C) postdate TCGA data collection
+- **G12V shows best survival among KRAS-mutated subtypes** — tracks closely 
+  with WT throughout follow-up
+- **G12C shows faster early mortality** than WT despite similar overall event 
+  rates — KM curve shape reveals what crude mortality rates miss
+- **G12D has highest overall mortality (44.4%)** — consistent with emerging 
+  evidence of more aggressive biology
+
+![KRAS Subtypes](notebooks/figures/fig7_kras_subtypes.png)
+
+### 8. KRAS Co-mutation Analysis (KRAS + STK11, KRAS + KEAP1)
+Survival analysis within KRAS-mutated patients stratified by co-occurring mutations.
+
+- **KRAS only has the best survival (30.3% mortality)** — co-mutations add 
+  adverse biological complexity
+- **KRAS + KEAP1 has the highest mortality (55.0%)** — suggesting KEAP1 
+  co-mutation has a stronger adverse effect than STK11 in this cohort
+- **KRAS + STK11 curve reaches 0 at ~54 months** — not because all patients 
+  died (41.7% mortality), but because no patients remain at risk beyond that 
+  point (n=0 at t=75mo in risk table)
+- Results are directionally consistent with published literature but do not 
+  reach significance (p=0.2146) due to small group sizes (n=16–24)
+
+![KRAS Co-mutations](notebooks/figures/fig8_kras_comutations.png)
+
 ## Next Steps
-- KRAS subtype analysis (G12C, G12V, G12D)
-- Co-mutation analysis (KRAS + STK11, KRAS + KEAP1)
-- Multivariable Cox model integrating stage + mutation status
+- Multivariable Cox model — stage + mutation status
 - ML-based survival prediction integrating clinical + molecular features
+
 
 ## Stack
 
@@ -114,4 +145,4 @@ jupyter notebook
 
 **Author:** Raquel (Kely) Norel, PhD  
 **Domain:** Oncology / Real-World Evidence  
-**Status:** 🔄 In progress
+**Status:** 🔄 In progress — Cox model and ML prediction next
