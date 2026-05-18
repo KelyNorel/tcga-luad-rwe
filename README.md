@@ -1,16 +1,16 @@
-# TCGA LUAD — Multi-Modal Survival Analysis
+# TCGA LUAD — Multi-Modal Survival Analysis & Trial Emulation
 
-End-to-end survival and biomarker analysis of lung adenocarcinoma using the TCGA 
-Pan-Cancer Atlas 2018 dataset, integrating clinical, somatic mutation, and 
-transcriptomic data.
+End-to-end survival, biomarker, and causal inference analysis of lung adenocarcinoma 
+using the TCGA Pan-Cancer Atlas 2018 dataset, integrating clinical, somatic mutation, 
+transcriptomic data, and treatment timelines.
 
 ## Overview
 
 Lung adenocarcinoma (LUAD) is the most common subtype of non-small cell lung cancer. 
 This project analyzes overall survival across clinical and molecular dimensions, 
-combining classical biostatistical methods with genomic biomarker analysis and 
-multimodal machine learning — reflecting real-world evidence (RWE) methodology 
-used in oncology research.
+combining classical biostatistical methods with genomic biomarker analysis, 
+multimodal machine learning, and causal inference via trial emulation — reflecting 
+real-world evidence (RWE) methodology used in oncology research.
 
 All data sourced from cBioPortal (publicly available). No PHI involved.
 
@@ -20,7 +20,9 @@ All data sourced from cBioPortal (publicly available). No PHI involved.
 **Patients:** 505 with complete survival data (566 total, 61 excluded — missing OS)  
 **Median OS:** 49.3 months  
 **OS event rate:** 36.0% (182/505)  
-**Data types:** Clinical, somatic mutations, TMB, MSI, copy number (arm-level), RNA-seq (20,531 genes)
+**Data types:** Clinical, somatic mutations, TMB, MSI, copy number (arm-level), RNA-seq (20,531 genes), treatment timelines
+
+---
 
 ## Notebook 01 — Clinical & Genomic Survival Analysis (`notebooks/01_eda.ipynb`)
 
@@ -133,6 +135,8 @@ Binary classification integrating clinical and molecular features.
 
 ![ML Prediction](notebooks/figures/fig10_ml_prediction.png)
 
+---
+
 ## Notebook 02 — Multimodal Survival Analysis: Clinical + RNA-seq (`notebooks/02_multimodal_survival.ipynb`)
 
 Integration of RNA-seq gene expression (20,531 genes) with clinical features 
@@ -201,12 +205,103 @@ with optimal cutpoint for ERO1L and LDHA.
 
 ![Optimal Cutpoint](notebooks/figures/fig17_optimal_cutpoint.png)
 
+---
+
+## Notebook 03 — Trial Emulation: Causal Effect of Adjuvant Chemotherapy (`notebooks/03_trial_emulation.ipynb`)
+
+Emulation of a target trial to estimate the causal effect of adjuvant chemotherapy 
+on overall survival in resected LUAD (Stage I–III), following the target trial 
+emulation framework (Hernán & Robins, 2016). Propensity score matching (PSM) and 
+inverse probability weighting (IPW) are used to address confounding by indication.
+
+**Cohort:** 188 patients with treatment records (Stage I–III) | 154 chemo, 34 no chemo  
+**Event rate:** 42.6% (80/188) | **Data source:** TCGA treatment timeline + clinical data
+
+### Target Trial Protocol
+
+| Component | Specification |
+|---|---|
+| Eligibility | LUAD, Stage I–III, with treatment record in TCGA timeline |
+| Treatment | Adjuvant chemotherapy (yes vs no) |
+| Outcome | Overall survival — time from diagnosis to death |
+| Causal contrast | Intention-to-treat analogue |
+| Analysis | Cox PH model adjusted via PSM and IPW |
+
+### Confounding by Indication
+Treatment records are available for 204/571 patients (35.7%). Within the eligible 
+cohort, chemotherapy is preferentially administered to younger patients with more 
+advanced disease — the classic confounding-by-indication structure in oncology RWE.
+
+| | Chemotherapy (n=154) | No Chemotherapy (n=34) |
+|---|---|---|
+| Stage I | 23.4% | 73.5% |
+| Stage II | 44.2% | 8.8% |
+| Stage III | 32.5% | 17.6% |
+| Median age | 64.5 years | 70.0 years |
+
+### Propensity Score Model
+Logistic regression on age, stage, sex, TMB, aneuploidy, and driver mutations 
+(TP53, KRAS, STK11, KEAP1, EGFR). **AUC = 0.828** — confirming strong separation 
+consistent with substantial confounding.
+
+![PS Distribution](notebooks/figures/fig18_ps_distribution.png)
+
+### Covariate Balance — Love Plot
+PSM achieves SMD < 0.1 for 8 of 10 covariates. Stage (SMD: 0.849 → 0.13) and 
+age (SMD: 0.530 → 0.09) show the largest improvements after matching.
+
+![Love Plot](notebooks/figures/fig20_love_plot.png)
+
+### Survival Analysis Results
+
+| Method | HR | 95% CI | p-value | N |
+|---|---|---|---|---|
+| Naive (unadjusted) | 0.55 | 0.34–0.89 | 0.015 | 188 |
+| PSM-adjusted | 0.31 | 0.10–0.93 | 0.037 | 44 |
+| IPW-adjusted | 0.37 | 0.22–0.64 | <0.001 | 188 |
+
+All three estimators show a consistent direction of effect. IPW is the preferred 
+estimator — it uses the full cohort, produces narrower confidence intervals, and 
+avoids patient loss from caliper restrictions. PSM and IPW consistency strengthens 
+confidence in the causal direction.
+
+![Naive KM](notebooks/figures/fig19_naive_km.png)
+![PSM KM](notebooks/figures/fig21_psm_km.png)
+![Estimator Comparison](notebooks/figures/fig22_estimator_comparison.png)
+
+### Sensitivity Analysis — E-value
+The E-value (VanderWeele & Ding, 2017) quantifies robustness to unmeasured confounding.
+
+| | HR | E-value |
+|---|---|---|
+| Point estimate | 0.374 | 4.79 |
+| CI lower bound | 0.218 | 8.64 |
+
+An unmeasured confounder would need to be associated with both chemotherapy receipt 
+and mortality by a risk ratio of at least **4.79-fold each** to fully explain away 
+the observed effect — approximately 3× stronger than the largest measured confounder 
+(pathologic stage). This supports the robustness of the finding.
+
+### Key Findings
+- Chemotherapy is associated with improved OS across all estimators (HR 0.31–0.55)
+- Confounding by indication is clearly demonstrated and successfully addressed
+- IPW (HR=0.37, p<0.001) is the primary causal estimate; PSM (HR=0.31, p=0.037) is confirmatory
+- E-value of 4.79 indicates the finding is robust to unmeasured confounding of plausible magnitude
+
+### Limitations
+- Treatment records available for only 35.7% of patients — potential selection bias
+- Small control group (n=34) limits PSM statistical power (22 matched pairs)
+- TCGA predates modern immunotherapy and targeted therapy combinations
+- Unmeasured confounders (performance status, comorbidities) not captured in TCGA data
+
+---
+
 ## Stack
 
 - **Python, pandas** — data ingestion and processing
 - **lifelines** — Kaplan-Meier, Cox PH, log-rank tests
 - **scikit-survival** — Uno C-index, formal survival model comparison
-- **scikit-learn** — ML prediction, PCA, permutation importance
+- **scikit-learn** — ML prediction, PCA, permutation importance, propensity score model
 - **Matplotlib** — visualizations
 - **Jupyter** — documented analysis notebooks
 
@@ -220,6 +315,7 @@ tcga-luad-rwe/
 ├── notebooks/
 │   ├── 01_eda.ipynb                 # clinical & genomic survival analysis
 │   ├── 02_multimodal_survival.ipynb # RNA-seq integration & multimodal models
+│   ├── 03_trial_emulation.ipynb     # causal inference & trial emulation
 │   └── figures/                     # saved plots
 ├── src/
 │   └── ingest.py                    # data ingestion and cleaning
@@ -241,5 +337,5 @@ jupyter notebook
 ---
 
 **Author:** Raquel (Kely) Norel, PhD  
-**Domain:** Oncology / Real-World Evidence  
-***Status:** ✅ Complete
+**Domain:** Oncology / Real-World Evidence / Causal Inference  
+**Status:** ✅ Complete
