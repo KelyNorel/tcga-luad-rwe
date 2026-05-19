@@ -313,11 +313,62 @@ confounding — chemotherapy is not standard of care in Stage I LUAD.
 
 ---
 
+## Notebook 04 — Gradient Boosting Survival Analysis (`notebooks/04_xgboost_survival.ipynb`)
+
+Tree-based survival analysis using `GradientBoostingSurvivalAnalysis` (scikit-survival),
+benchmarked against Cox PH on the same clinical and molecular features.
+
+**Cohort:** 485 patients | 172 events (35.5%) | 10 features  
+**Split:** 75% train / 25% test | 5-fold cross-validation
+
+### Model Comparison
+
+| Model | CV C-index | Test C-index |
+|---|---|---|
+| Cox PH baseline | 0.682 ± 0.056 | 0.767 |
+| Gradient Boosting Survival | 0.646 ± 0.050 | 0.711 |
+
+Cox PH outperforms Gradient Boosting Survival in cross-validation — consistent
+with the pattern observed in Notebook 01 where simpler models generalize better
+at this sample size. Gradient boosting is expected to gain advantage in larger
+datasets where non-linear feature interactions can be reliably estimated.
+
+### Feature Importance
+
+![GBS Feature Importance](notebooks/figures/fig24_gbs_importance.png)
+
+Stage is the overwhelmingly dominant predictor (importance=0.17). AGE and
+ANEUPLOIDY_SCORE are secondary contributors. STK11 — the strongest prognostic
+factor in the Cox model (HR=1.67, p=0.01) — shows near-zero permutation
+importance, illustrating the fundamental distinction between Cox effect size
+and predictive contribution.
+
+### Cross-Project Model Comparison
+
+![Model Comparison](notebooks/figures/fig25_model_comparison.png)
+
+Across all four notebooks, Cox PH achieves the best cross-validated C-index.
+Stage dominates all models — the ceiling on C-index reflects the limited number
+of features that independently predict survival beyond pathologic stage in TCGA LUAD.
+
+### Key Findings
+- Cox PH (CV C-index 0.682) outperforms Gradient Boosting Survival (0.646)
+- Stage > Age > Aneuploidy as predictive features — consistent across all models
+- STK11 prognostic significance (Cox) does not translate to predictive importance (GBS)
+- Non-linear methods require larger datasets to outperform linear survival models
+
+### Limitations
+- Default hyperparameters used — grid search not performed
+- Small sample size limits gradient boosting's capacity for non-linear learning
+- No external validation cohort available
+
+---
+
 ## Stack
 
 - **Python, pandas** — data ingestion and processing
 - **lifelines** — Kaplan-Meier, Cox PH, log-rank tests
-- **scikit-survival** — Uno C-index, formal survival model comparison
+- **scikit-survival** — Uno C-index, formal survival model comparison, Cox PH, Gradient Boosting Survival
 - **scikit-learn** — ML prediction, PCA, permutation importance, propensity score model
 - **Matplotlib** — visualizations
 - **Jupyter** — documented analysis notebooks
@@ -333,6 +384,7 @@ tcga-luad-rwe/
 │   ├── 01_eda.ipynb                 # clinical & genomic survival analysis
 │   ├── 02_multimodal_survival.ipynb # RNA-seq integration & multimodal models
 │   ├── 03_trial_emulation.ipynb     # causal inference & trial emulation
+│   ├── 04_xgboost_survival.ipynb    # gradient boosting survival analysis
 │   └── figures/                     # saved plots
 ├── src/
 │   └── ingest.py                    # data ingestion and cleaning
