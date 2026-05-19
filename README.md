@@ -313,7 +313,7 @@ confounding — chemotherapy is not standard of care in Stage I LUAD.
 
 ---
 
-## Notebook 04 — Gradient Boosting Survival Analysis (`notebooks/04_xgboost_survival.ipynb`)
+## Notebook 04 — Gradient Boosting Survival Analysis (`notebooks/04_gradient_boosting_survival.ipynb`)
 
 Tree-based survival analysis using `GradientBoostingSurvivalAnalysis` (scikit-survival),
 benchmarked against Cox PH on the same clinical and molecular features.
@@ -378,16 +378,16 @@ of features that independently predict survival beyond pathologic stage in TCGA 
 ```
 tcga-luad-rwe/
 ├── data/
-│   ├── raw/                         # cBioPortal source files (not tracked in git)
-│   └── processed/                   # cleaned datasets (not tracked in git)
+│   ├── raw/                                # cBioPortal source files (not tracked in git)
+│   └── processed/                          # cleaned datasets (not tracked in git)
 ├── notebooks/
-│   ├── 01_eda.ipynb                 # clinical & genomic survival analysis
-│   ├── 02_multimodal_survival.ipynb # RNA-seq integration & multimodal models
-│   ├── 03_trial_emulation.ipynb     # causal inference & trial emulation
-│   ├── 04_xgboost_survival.ipynb    # gradient boosting survival analysis
-│   └── figures/                     # saved plots
+│   ├── 01_eda.ipynb                        # clinical & genomic survival analysis
+│   ├── 02_multimodal_survival.ipynb        # RNA-seq integration & multimodal models
+│   ├── 03_trial_emulation.ipynb            # causal inference & trial emulation
+│   ├── 04_gradient_boosting_survival.ipynb # gradient boosting survival analysis
+│   └── figures/                            # saved plots
 ├── src/
-│   └── ingest.py                    # data ingestion and cleaning
+│   └── ingest.py                            # data ingestion and cleaning
 ├── requirements.txt
 ├── .gitignore
 └── README.md
