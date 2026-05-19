@@ -282,6 +282,23 @@ and mortality by a risk ratio of at least **4.79-fold each** to fully explain aw
 the observed effect — approximately 3× stronger than the largest measured confounder 
 (pathologic stage). This supports the robustness of the finding.
 
+### Subgroup Analysis by Pathologic Stage
+
+IPW-adjusted Cox models fit separately within each stage subgroup.
+
+| Stage | N | Chemo | Control | HR | 95% CI | p-value |
+|---|---|---|---|---|---|---|
+| Stage I | 61 | 36 | 25 | 0.39 | 0.16–0.95 | 0.037 |
+| Stage II | 71 | 68 | 3 | 1.10 | 0.08–>5.00 | 0.944 |
+| Stage III | 56 | 50 | 6 | 0.44 | 0.23–0.82 | 0.010 |
+
+Stage III shows the most reliable estimate (HR=0.44, p=0.010), consistent with
+randomized trial evidence. Stage II is uninformative due to only 3 control patients.
+Stage I shows an unexpected benefit signal likely attributable to residual
+confounding — chemotherapy is not standard of care in Stage I LUAD.
+
+![Subgroup Analysis](notebooks/figures/fig23_subgroup_stage.png)
+
 ### Key Findings
 - Chemotherapy is associated with improved OS across all estimators (HR 0.31–0.55)
 - Confounding by indication is clearly demonstrated and successfully addressed
